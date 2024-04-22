@@ -1,5 +1,6 @@
 // Query returns service principals sign-ins and list them by number of sign-ins pr. ip adress
 AADServicePrincipalSignInLogs
 | where TimeGenerated > ago(100d)
+| where ResultType == "0"
 | summarize LoginCount=count() by ServicePrincipalName, AppId, IPAddress
 | sort by LoginCount // Change this to either IPAddress or AppId to sort in anotherway
