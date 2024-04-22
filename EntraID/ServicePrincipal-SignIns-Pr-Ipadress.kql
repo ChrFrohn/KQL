@@ -5,5 +5,5 @@ AADServicePrincipalSignInLogs
 | where TimeGenerated > ago(100d)
 //| where IPAddress in (HQIPs) // Uncomment this with the first line to use filter on specif IP adress
 | where ResultType == "0"
-| summarize LoginCount=count() by ServicePrincipalName, AppId, IPAddress
+| summarize LoginCount=count() by ServicePrincipalName, AppId, IPAddress, Location
 | sort by LoginCount // Change this to either IPAddress or AppId to sort in anotherway
