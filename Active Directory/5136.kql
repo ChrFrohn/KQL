@@ -1,3 +1,5 @@
+// Change line 6 to match the service account names you want to exclude from the query
+// change linje 10,11,12,13 to match the OU's you want to include in the query
 SecurityEvent
 | where EventID == '5136'
 | where AccountType == 'User' 
