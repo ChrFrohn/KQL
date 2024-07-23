@@ -19,4 +19,4 @@ SecurityEvent
 | extend ObjectGUID = replace(@"\{|\}", "", ObjectGUID)
 | extend TimeGeneratedTruncated = bin(TimeGenerated, 1s)
 | summarize arg_max(TimeGenerated, *) by ObjectGUID, AttributeLDAPDisplayName, TimeGeneratedTruncated
-| project TimeGenerated,ObjectGUID // ObjectDN, ObjectClass, AttributeLDAPDisplayName, AttributeValue, SubjectUserName, <- Uncomment this to see more details
+| project TimeGenerated, ObjectGUID // ObjectDN, ObjectClass, AttributeLDAPDisplayName, AttributeValue, SubjectUserName, <- Uncomment this to see more details
