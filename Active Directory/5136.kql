@@ -1,0 +1,20 @@
+SecurityEvent
+| where EventID == '5136'
+| where AccountType == 'User' 
+  and not(Account has_any("SERVICE ACCOUNT1", "SERVICE ACCOUNT2", "SERVICE ACCOUNT3"))
+| extend XMLData = parse_xml(EventData)
+| extend ObjectDN = tostring(XMLData.EventData.Data[8].["#text"])
+| where ObjectDN matches regex ".*OU=IT,OU=ChristianFrohn,DC=CFPLOCAL,DC=DK.*" 
+   or ObjectDN matches regex ".*OU=Users-CPH,OU=ChristianFrohn,DC=CFPLOCAL,DC=DK.*"
+   or ObjectDN matches regex ".*OU=Users-LON,OU=OU=ChristianFrohn,DC=CFPLOCAL,DC=DK.*"
+   or ObjectDN matches regex ".*OU=Users-USA,OU=OU=ChristianFrohn,DC=CFPLOCAL,DC=DK.*"
+| extend ObjectDN = extract("CN=([^,]+)", 1, ObjectDN)
+| extend ObjectClass = tostring(XMLData.EventData.Data[10].["#text"])
+| where ObjectClass contains "User"
+| extend AttributeLDAPDisplayName = tostring(XMLData.EventData.Data[11].["#text"])
+| extend AttributeValue = tostring(XMLData.EventData.Data[13].["#text"])
+| extend ObjectGUID = tostring(XMLData.EventData.Data[9].["#text"])
+| extend ObjectGUID = replace(@"\{|\}", "", ObjectGUID)
+| extend TimeGeneratedTruncated = bin(TimeGenerated, 1s)
+| summarize arg_max(TimeGenerated, *) by ObjectGUID, AttributeLDAPDisplayName, TimeGeneratedTruncated
+| project TimeGenerated, ObjectDN, ObjectClass, AttributeLDAPDisplayName, AttributeValue, SubjectUserName, ObjectGUID
