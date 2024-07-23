@@ -1,0 +1,4 @@
+SecurityEvent
+| where EventID == '5136'
+| where AccountType == 'User' 
+| summarize by Account
