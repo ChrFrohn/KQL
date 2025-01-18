@@ -5,7 +5,8 @@ AuditLogs
 | extend UserFilter = tostring(Targets[0].type)
 | where UserFilter == 'User'
 | where isempty(Identity)
-| extend RemovedUser = tostring(Targets[0].userPrincipalName)
+| extend RemovedUserUPN = tostring(Targets[0].userPrincipalName)
+| extend RemovedUserId = tostring(Targets[0].id)
 | extend GroupRemovedFromId = tostring(Targets[0].modifiedProperties[0].oldValue)
 | extend GroupRemovedFromName = tostring(Targets[0].modifiedProperties[1].oldValue)
-| project RemovedUser, OperationName, GroupRemovedFromId, GroupRemovedFromName, TimeGenerated, Initiater, Identity
+| project RemovedUserId, RemovedUserUPN, OperationName, GroupRemovedFromId, GroupRemovedFromName, TimeGenerated, Initiater, Identity
