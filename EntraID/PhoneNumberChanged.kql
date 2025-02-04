@@ -1,0 +1,8 @@
+AuditLogs
+| where OperationName contains "Update user"
+| extend UpdateInfo = tostring(TargetResources[0].modifiedProperties)
+| extend UpdateInfo = parse_json(tostring(TargetResources[0].modifiedProperties))
+| extend Initiater = tostring(InitiatedBy.user.userPrincipalName)
+| mv-expand UpdateInfo
+| where UpdateInfo.displayName == "TelephoneNumber"
+| project Initiater, UpdatedAttribute = UpdateInfo.newValue
