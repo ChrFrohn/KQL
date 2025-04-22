@@ -1,0 +1,15 @@
+// This query returns the administrators who directly REMOVED a user FROM an access package in Entra ID Governance.
+// Usecase: Insights and/or monitoring alert via Sentinal/Azure Monitor
+
+AuditLogs
+| where TimeGenerated > ago(1)
+| where Category == 'EntitlementManagement'
+| where OperationName contains "Administrator directly removes user access package assignment"
+| extend InitiatorUserName = tostring(InitiatedBy.user.displayName)
+| where InitiatorUserName != ""
+| extend AssignedUserName = tostring(AdditionalDetails[2].value)
+| extend AssignmentReason = tostring(AdditionalDetails[0].value)
+| extend AccessPackageName = tostring(TargetResources[4].displayName)
+| extend CatalogName = tostring(TargetResources[5].displayName)
+| extend PolicyName = tostring(TargetResources[7].displayName)
+| project InitiatorUserName, OperationName, AssignedUserName, AssignmentReason, AccessPackageName, CatalogName, PolicyName

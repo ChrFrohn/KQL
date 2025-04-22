@@ -1,0 +1,15 @@
+// Query to get the list of access packages created in the last 24 hours
+// Usecase: Insights and/or monitoring alert via Sentinal/Azure Monitor
+
+AuditLogs
+| where TimeGenerated > ago(1d)
+| where Category == 'EntitlementManagement'
+| where OperationName == "Create access package"
+| extend Instigator = InitiatedBy
+| extend InstigatorUser = tostring(Instigator.user.displayName)
+| extend Targets = TargetResources
+| extend Details = AdditionalDetails
+| extend TargetedUser = tostring(Details[2].value)
+| extend EMAccessPackge = tostring(Targets[0].displayName)
+| extend EMAPDescription = tostring(Targets[0].modifiedProperties[1].newValue)
+| project EMAccessPackge, EMAPDescription, InstigatorUser, TimeGenerated

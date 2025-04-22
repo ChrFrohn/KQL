@@ -1,0 +1,9 @@
+// This query returns the number of access package assignment requests approved by each user in the last 365 days.
+// Usecase: Insights
+
+AuditLogs
+| where TimeGenerated > ago(365d)
+| where Category == 'EntitlementManagement'
+| where OperationName == "Approve access package assignment request"
+| summarize count() by Identity
+| sort by count_

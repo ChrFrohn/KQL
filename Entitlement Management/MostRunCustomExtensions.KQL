@@ -1,0 +1,11 @@
+// This query will output the most used custom extensions in a piechart
+// Usecase: Insights
+
+AuditLogs
+| where TimeGenerated > ago(91d)
+| where Category == 'EntitlementManagement'
+| where OperationName == "Execute custom extension"
+| extend Targets = TargetResources
+| extend CustomExtension = tostring(Targets[0].displayName)
+| summarize count() by CustomExtension
+| render piechart with(title="Custom Extensions Usage")

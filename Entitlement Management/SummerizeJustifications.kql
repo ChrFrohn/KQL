@@ -1,0 +1,16 @@
+// QUery to output the resasons why users are requesting access to an access AccessPackageAssignment
+// Usage: Insight
+
+AuditLogs
+| where TimeGenerated > ago(365d)
+| where Category == 'EntitlementManagement'
+| where OperationName == "User requests access package assignment"
+| extend Instigator = InitiatedBy
+| extend InstigatorUser = tostring(Instigator.user.displayName)
+| extend Targets = TargetResources
+| extend Details = AdditionalDetails
+| extend TargetedUser = tostring(Details[2].value)
+| extend ReasonForAdd = tostring(Details[0].value)
+| extend EMAccessPackge = tostring(Targets[4].displayName)
+| where ReasonForAdd != "User" // If user didnt provide any
+| summarize by ReasonForAdd, EMAccessPackge, InstigatorUser

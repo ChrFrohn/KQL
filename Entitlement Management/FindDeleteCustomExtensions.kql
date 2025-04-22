@@ -1,0 +1,15 @@
+// This query will return the user who deleted a custom extension in Entra ID Governance
+// Usecase: Insights and/or monitoring alert via Sentinal/Azure Monitor 
+
+AuditLogs
+| where TimeGenerated > ago(1d)
+| where Category == 'EntitlementManagement'
+| where OperationName == "Delete custom extension"
+| extend Instigator = InitiatedBy
+| extend InstigatorUser = tostring(Instigator.user.displayName)
+| extend Targets = TargetResources
+| extend Details = AdditionalDetails
+| extend CustomExtension = tostring(Targets[0].displayName)
+| extend AzSubscription = tostring(Targets[0].modifiedProperties[4].oldValue)
+| extend RGGroup = tostring(Targets[0].modifiedProperties[5].oldValue)
+| project TimeGenerated, InstigatorUser, CustomExtension, RGGroup, AzSubscription

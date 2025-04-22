@@ -1,0 +1,5 @@
+SigninLogs
+| where TimeGenerated > ago(30d)
+| where AuthenticationProtocol == "deviceCode"
+| project TimeGenerated, AuthenticationProtocol, UserPrincipalName, Identity, IPAddress, Location, NetworkLocationDetails, DeviceDetail
+, ConditionalAccessStatus

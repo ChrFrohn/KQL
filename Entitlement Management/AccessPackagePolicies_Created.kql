@@ -1,0 +1,16 @@
+// This query will return the access package assignment policy created in the last 24 hours
+// Usecase: Insights and/or monitoring alert via Sentinal/Azure Monitor
+
+AuditLogs
+| where TimeGenerated > ago(1d)
+| where Category == 'EntitlementManagement'
+| where OperationName == "Create access package assignment policy"
+| extend Instigator = InitiatedBy
+| extend InstigatorUser = tostring(Instigator.user.displayName)
+| extend Targets = TargetResources
+| extend Details = AdditionalDetails
+| extend TargetedUser = tostring(Details[2].value)
+| extend EMAccessPackgePolicy = tostring(Targets[0].displayName)
+| extend EMAPDescriptionPolicy = tostring(Targets[0].modifiedProperties[1].newValue)
+| extend EMAccessPackageID = tostring(Targets[1].id)
+| project EMAccessPackgePolicy, EMAPDescriptionPolicy, EMAccessPackageID, InstigatorUser, TimeGenerated

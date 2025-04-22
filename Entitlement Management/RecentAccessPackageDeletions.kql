@@ -1,0 +1,12 @@
+// This query returns the users who deleted access packages in the last 24 hours.
+// Usecase: Insights and/or monitoring alert via Sentinal/Azure Monitor
+
+AuditLogs
+| where TimeGenerated > ago(1d)
+| where Category == 'EntitlementManagement'
+| where OperationName == "Delete access package"
+| extend Instigator = InitiatedBy
+| extend InstigatorUser = tostring(Instigator.user.displayName)
+| extend Targets = TargetResources
+| extend DeletedAccessPackage = tostring(Targets[0].displayName)
+| project InstigatorUser, DeletedAccessPackage, TimeGenerated

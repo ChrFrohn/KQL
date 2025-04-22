@@ -1,0 +1,13 @@
+// This query shows how many users that has been added to each access Packages
+// Usage: Insights
+
+AuditLogs
+| where TimeGenerated > ago(365d)
+| where Category == 'EntitlementManagement'
+| where OperationName contains "Auto approve access package assignment request"
+| extend InstigatorUser = tostring(InitiatedBy.user.displayName)
+| extend TargetedUser = tostring(AdditionalDetails[2].value)
+| extend EMAccessPackage = tostring(TargetResources[4].displayName)
+| summarize userCount = count() by EMAccessPackage
+| sort by userCount
+| render piechart with(title="Access Packages by Amount of Users")

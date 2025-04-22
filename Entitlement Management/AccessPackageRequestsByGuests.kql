@@ -1,0 +1,17 @@
+// query to find all access package assignment requests initiated by users outside of own tenant
+// Usecase: Insights and/or monitoring alert via Sentinal/Azure Monitor
+
+let HomeDomain = ""; //Sample: @Christianfrohn.dk
+AuditLogs
+| where TimeGenerated > ago(1d)
+| where Category == 'EntitlementManagement'
+| where OperationName contains "requests access package assignment"
+| extend Instigator = InitiatedBy
+| extend InstigatorUser = tostring(Instigator.user.userPrincipalName)
+| extend InstigatorDisplayName = tostring(Instigator.user.displayName)
+| where InstigatorUser !contains HomeDomain
+| extend Targets = TargetResources
+| extend Details = AdditionalDetails
+| extend ReasonForAdd = tostring(Details[0].value)
+| extend EMAccessPackge = tostring(Targets[5].displayName)
+| project InstigatorUser, InstigatorDisplayName, ReasonForAdd, EMAccessPackge, TimeGenerated
