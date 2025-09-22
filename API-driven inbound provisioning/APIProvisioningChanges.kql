@@ -58,15 +58,15 @@ AADProvisioningLogs
         strcat("Unknown: ", AttributeName)
     ),
     AttributeCategory = case(
-        AttributeName in ("msDS-cloudExtensionAttribute1", "msDS-cloudExtensionAttribute2"), "Employment Dates",
-        AttributeName in ("extensionAttribute10", "extensionAttribute4", "extensionAttribute5", "extensionAttribute13"), "Employment Info",
-        AttributeName in ("extensionAttribute8", "extensionAttribute9", "title", "department", "division", "employeeType"), "Job Details",
-        AttributeName in ("extensionAttribute6", "physicalDeliveryOfficeName", "streetAddress", "l", "postalCode", "co", "c"), "Location Info",
-        AttributeName in ("extensionAttribute11", "extensionAttribute12", "telephoneNumber"), "Contact Info",
-        AttributeName in ("extensionAttribute1", "extensionAttribute2", "extensionAttribute7", "extensionAttribute14", "extensionAttribute15"), "System Info",
-        AttributeName startswith "msDS-cloudExtension", "Cloud Extensions",
-        AttributeName startswith "extensionAttribute", "Extension Attributes",
-        "Other Attributes"
+        AttributeName in ("msDS-cloudExtensionAttribute1", "msDS-cloudExtensionAttribute2"), "🗓️ Employment Dates",
+        AttributeName in ("extensionAttribute10", "extensionAttribute4", "extensionAttribute5", "extensionAttribute13"), "👥 Employment Info",
+        AttributeName in ("extensionAttribute8", "extensionAttribute9", "title", "department", "division", "employeeType"), "💼 Job Details",
+        AttributeName in ("extensionAttribute6", "physicalDeliveryOfficeName", "streetAddress", "l", "postalCode", "co", "c"), "📍 Location Info",
+        AttributeName in ("extensionAttribute11", "extensionAttribute12", "telephoneNumber"), "📞 Contact Info",
+        AttributeName in ("extensionAttribute1", "extensionAttribute2", "extensionAttribute7", "extensionAttribute14", "extensionAttribute15"), "⚙️ System Info",
+        AttributeName startswith "msDS-cloudExtension", "🔧 Cloud Extensions",
+        AttributeName startswith "extensionAttribute", "📝 Extension Attributes",
+        "❓ Other Attributes"
     ),
     ChangeDescription = case(
         AttributeName in ("msDS-cloudExtensionAttribute1", "msDS-cloudExtensionAttribute2") and isnotempty(NewValue) and NewValue != "null",
@@ -76,10 +76,10 @@ AADProvisioningLogs
         strcat("Changed from '", OldValue, "' to '", NewValue, "'")
     ),
     TimeWindow = case(
-        TimeGenerated > ago(1h), "Last Hour",
-        TimeGenerated > ago(6h), "Last 6 Hours",
-        TimeGenerated > ago(24h), "Last 24 Hours",
-        "Older"
+        TimeGenerated > ago(1h), "🔴 Last Hour",
+        TimeGenerated > ago(6h), "🟡 Last 6 Hours",
+        TimeGenerated > ago(24h), "🟠 Last 24 Hours",
+        "🔵 Older"
     )
 | project 
     TimeGenerated,
