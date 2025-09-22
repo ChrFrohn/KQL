@@ -1,0 +1,94 @@
+// API-Driven Provisioning Attribute Changes
+// Purpose: Monitor automated user attribute updates to on-premises AD via API-driven provisioning
+// Author: Christian Frohn - https://www.linkedin.com/in/frohn/
+// Time Range: Last 7 days
+
+AADProvisioningLogs
+| where TimeGenerated >= ago(7d)
+| where Action in ("Create", "Update", "Delete")
+| extend 
+    TargetSystemParsed = parse_json(TargetSystem),
+    SourceIdentityParsed = parse_json(SourceIdentity),
+    ModifiedProps = parse_json(ModifiedProperties)
+| where tostring(TargetSystemParsed.Name) == "On Premises Active Directory"
+| where array_length(ModifiedProps) > 0  // Only show records with actual changes
+| extend 
+    UserIdentifier = tostring(SourceIdentityParsed.Id),
+    UserName = tostring(SourceIdentityParsed.Name)
+| mv-expand ModifiedProperty = ModifiedProps
+| extend
+    AttributeName = tostring(ModifiedProperty.displayName),
+    OldValue = tostring(ModifiedProperty.oldValue),
+    NewValue = tostring(ModifiedProperty.newValue)
+| where AttributeName != "accountDisabled"  // Exclude routine account enabling
+| extend 
+    // Map attributes to business-friendly names
+    AttributeDisplayName = case(
+        AttributeName == "msDS-cloudExtensionAttribute1", "Custom Field 1",
+        AttributeName == "msDS-cloudExtensionAttribute2", "Custom Field 2",
+        AttributeName == "msDS-cloudExtensionAttribute3", "Custom Field 3",
+        AttributeName == "msDS-cloudExtensionAttribute4", "Custom Field 4",
+        AttributeName == "extensionAttribute1", "Custom Field 5",
+        AttributeName == "extensionAttribute2", "Custom Field 6", 
+        AttributeName == "extensionAttribute3", "Custom Field 7",
+        AttributeName == "extensionAttribute4", "Custom Field 8",
+        AttributeName == "extensionAttribute5", "Custom Field 9",
+        AttributeName == "extensionAttribute6", "Custom Field 10",
+        AttributeName == "extensionAttribute7", "Custom Field 11",
+        AttributeName == "extensionAttribute8", "Custom Field 12",
+        AttributeName == "extensionAttribute9", "Custom Field 13",
+        AttributeName == "extensionAttribute10", "Custom Field 14",
+        AttributeName == "extensionAttribute11", "Custom Field 15",
+        AttributeName == "extensionAttribute12", "Custom Field 16",
+        AttributeName == "extensionAttribute13", "Custom Field 17",
+        AttributeName == "extensionAttribute14", "Custom Field 18",
+        AttributeName == "extensionAttribute15", "Custom Field 19",
+        AttributeName == "department", "Department",
+        AttributeName == "title", "Job Title",
+        AttributeName == "division", "Division",
+        AttributeName == "employeeType", "Employee Type",
+        AttributeName == "manager", "Manager ID",
+        AttributeName == "telephoneNumber", "Phone Number",
+        AttributeName == "physicalDeliveryOfficeName", "Office Location",
+        AttributeName == "streetAddress", "Street Address",
+        AttributeName == "l", "City",
+        AttributeName == "postalCode", "Postal Code",
+        AttributeName == "co", "Country",
+        AttributeName == "c", "Country Code",
+        strcat("Unknown: ", AttributeName)
+    ),
+    AttributeCategory = case(
+        AttributeName in ("msDS-cloudExtensionAttribute1", "msDS-cloudExtensionAttribute2"), "Employment Dates",
+        AttributeName in ("extensionAttribute10", "extensionAttribute4", "extensionAttribute5", "extensionAttribute13"), "Employment Info",
+        AttributeName in ("extensionAttribute8", "extensionAttribute9", "title", "department", "division", "employeeType"), "Job Details",
+        AttributeName in ("extensionAttribute6", "physicalDeliveryOfficeName", "streetAddress", "l", "postalCode", "co", "c"), "Location Info",
+        AttributeName in ("extensionAttribute11", "extensionAttribute12", "telephoneNumber"), "Contact Info",
+        AttributeName in ("extensionAttribute1", "extensionAttribute2", "extensionAttribute7", "extensionAttribute14", "extensionAttribute15"), "System Info",
+        AttributeName startswith "msDS-cloudExtension", "Cloud Extensions",
+        AttributeName startswith "extensionAttribute", "Extension Attributes",
+        "Other Attributes"
+    ),
+    ChangeDescription = case(
+        AttributeName in ("msDS-cloudExtensionAttribute1", "msDS-cloudExtensionAttribute2") and isnotempty(NewValue) and NewValue != "null",
+        strcat("Set to: ", format_datetime(todatetime(substring(NewValue, 0, 8)), "yyyy-MM-dd")),
+        isempty(OldValue) or OldValue == "null", strcat("Set to: ", NewValue),
+        isempty(NewValue) or NewValue == "null", strcat("Cleared (was: ", OldValue, ")"),
+        strcat("Changed from '", OldValue, "' to '", NewValue, "'")
+    ),
+    TimeWindow = case(
+        TimeGenerated > ago(1h), "Last Hour",
+        TimeGenerated > ago(6h), "Last 6 Hours",
+        TimeGenerated > ago(24h), "Last 24 Hours",
+        "Older"
+    )
+| project 
+    TimeGenerated,
+    TimeWindow,
+    UserIdentifier,
+    AttributeCategory,
+    AttributeDisplayName,
+    ChangeDescription,
+    Action,
+    ResultType,
+    AttributeName  // Keep original for reference
+| order by TimeGenerated desc, UserIdentifier asc
