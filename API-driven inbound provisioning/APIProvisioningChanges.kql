@@ -22,7 +22,7 @@ AADProvisioningLogs
     OldValue = tostring(ModifiedProperty.oldValue),
     NewValue = tostring(ModifiedProperty.newValue)
 | where AttributeName != "accountDisabled"  // Exclude routine account enabling
-| where UserIdentifier contains "EMP"
+//| where UserIdentifier contains "EMP"
 | extend 
     // Map attributes to business-friendly names
     AttributeDisplayName = case(
