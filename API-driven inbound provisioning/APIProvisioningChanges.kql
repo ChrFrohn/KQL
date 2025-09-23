@@ -6,6 +6,7 @@
 AADProvisioningLogs
 | where TimeGenerated >= ago(7d)
 | where Action in ("Create", "Update", "Delete")
+| where ResultType == "Success"
 | extend 
     TargetSystemParsed = parse_json(TargetSystem),
     SourceIdentityParsed = parse_json(SourceIdentity),
@@ -21,6 +22,7 @@ AADProvisioningLogs
     OldValue = tostring(ModifiedProperty.oldValue),
     NewValue = tostring(ModifiedProperty.newValue)
 | where AttributeName != "accountDisabled"  // Exclude routine account enabling
+| where UserIdentifier contains "EMP"
 | extend 
     // Map attributes to business-friendly names
     AttributeDisplayName = case(
@@ -28,6 +30,7 @@ AADProvisioningLogs
         AttributeName == "msDS-cloudExtensionAttribute2", "Custom Field 2",
         AttributeName == "msDS-cloudExtensionAttribute3", "Custom Field 3",
         AttributeName == "msDS-cloudExtensionAttribute4", "Custom Field 4",
+        AttributeName == "msExchHideFromAddressLists", "Hide From Address Lists",
         AttributeName == "extensionAttribute1", "Custom Field 5",
         AttributeName == "extensionAttribute2", "Custom Field 6", 
         AttributeName == "extensionAttribute3", "Custom Field 7",
@@ -43,25 +46,37 @@ AADProvisioningLogs
         AttributeName == "extensionAttribute13", "Custom Field 17",
         AttributeName == "extensionAttribute14", "Custom Field 18",
         AttributeName == "extensionAttribute15", "Custom Field 19",
+        AttributeName == "mailNickname", "MailNickName",
+        AttributeName == "sAMAccountName", "Account Name",
+        AttributeName == "displayName", "Display Name",
         AttributeName == "department", "Department",
         AttributeName == "title", "Job Title",
         AttributeName == "division", "Division",
         AttributeName == "employeeType", "Employee Type",
+        AttributeName == "company", "Company",
         AttributeName == "manager", "Manager ID",
         AttributeName == "telephoneNumber", "Phone Number",
         AttributeName == "physicalDeliveryOfficeName", "Office Location",
-        AttributeName == "streetAddress", "Street Address",
+        AttributeName == "preferredLanguage", "Language",
+        AttributeName == "st", "Street Address",
         AttributeName == "l", "City",
         AttributeName == "postalCode", "Postal Code",
         AttributeName == "co", "Country",
         AttributeName == "c", "Country Code",
+        AttributeName == "cn", "RDN",
+        AttributeName == "parentDistinguishedName", "DN",
+        AttributeName == "givenName", "FirstName",
+        AttributeName == "sn", "LastName",
+        AttributeName == "userPrincipalName", "UPN",
+        AttributeName == "countryCode", "Numeric Country Code",
+        AttributeName == "employeeID", "Employee Number",
         strcat("Unknown: ", AttributeName)
     ),
     AttributeCategory = case(
         AttributeName in ("msDS-cloudExtensionAttribute1", "msDS-cloudExtensionAttribute2"), "🗓️ Employment Dates",
-        AttributeName in ("extensionAttribute10", "extensionAttribute4", "extensionAttribute5", "extensionAttribute13"), "👥 Employment Info",
-        AttributeName in ("extensionAttribute8", "extensionAttribute9", "title", "department", "division", "employeeType"), "💼 Job Details",
-        AttributeName in ("extensionAttribute6", "physicalDeliveryOfficeName", "streetAddress", "l", "postalCode", "co", "c"), "📍 Location Info",
+        AttributeName in ("extensionAttribute10", "extensionAttribute4", "extensionAttribute5", "extensionAttribute13","userPrincipalName","givenName","sn","sAMAccountName","mailNickname","preferredLanguage","parentDistinguishedName","cn"), "👥 Employment Info",
+        AttributeName in ("extensionAttribute8", "extensionAttribute9", "title", "department", "division", "employeeType","manager","msExchHideFromAddressLists","employeeID"), "💼 Job Details",
+        AttributeName in ("extensionAttribute6", "physicalDeliveryOfficeName", "streetAddress", "l", "postalCode", "co", "c","company","st","countryCode"), "📍 Location Info",
         AttributeName in ("extensionAttribute11", "extensionAttribute12", "telephoneNumber"), "📞 Contact Info",
         AttributeName in ("extensionAttribute1", "extensionAttribute2", "extensionAttribute7", "extensionAttribute14", "extensionAttribute15"), "⚙️ System Info",
         AttributeName startswith "msDS-cloudExtension", "🔧 Cloud Extensions",
