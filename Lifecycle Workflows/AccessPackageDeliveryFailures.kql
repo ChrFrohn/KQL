@@ -1,0 +1,72 @@
+// Access Package Delivery Failure Alert Query
+// Monitors failed and partially successful access package assignments
+
+AuditLogs
+| where TimeGenerated >= ago(15m)  // Look back 15 minutes for alerts
+| where Category == "EntitlementManagement"
+| where Result != "success" or OperationName has_any ("Partially", "Failed", "Deny", "Timeout")
+| extend 
+    // Extract access package details from TargetResources
+    AccessPackageDisplayName = coalesce(
+        tostring(TargetResources[0].displayName),
+        tostring(parse_json(tostring(AdditionalDetails)).accessPackageDisplayName),
+        "Unknown Access Package"
+    ),
+    AccessPackageId = coalesce(
+        tostring(TargetResources[0].id),
+        tostring(parse_json(tostring(AdditionalDetails)).accessPackageId),
+        ""
+    ),
+    // Extract target user information
+    TargetUserUPN = coalesce(
+        tostring(TargetResources[1].userPrincipalName),
+        tostring(parse_json(tostring(AdditionalDetails)).targetUserPrincipalName),
+        "Unknown User"
+    ),
+    TargetUserDisplayName = coalesce(
+        tostring(TargetResources[1].displayName),
+        tostring(parse_json(tostring(AdditionalDetails)).targetUserDisplayName),
+        "Unknown User"
+    ),
+    // Extract catalog information if available
+    CatalogDisplayName = coalesce(
+        tostring(parse_json(tostring(AdditionalDetails)).catalogDisplayName),
+        "Unknown Catalog"
+    ),
+    // Extract error details
+    ErrorReason = coalesce(
+        tostring(ResultReason),
+        tostring(parse_json(tostring(AdditionalDetails)).failureReason),
+        "No error details available"
+    ),
+    // Determine initiator
+    RequestInitiator = coalesce(
+        tostring(InitiatedBy.user.userPrincipalName),
+        tostring(InitiatedBy.app.displayName),
+        "System"
+    ),
+    // Classify failure severity
+    FailureSeverity = case(
+        OperationName contains "Deny", "High",
+        OperationName contains "Failed", "High", 
+        OperationName contains "Timeout", "Medium",
+        OperationName contains "Partially", "Medium",
+        "Low"
+    )
+| project 
+    TimeGenerated,
+    OperationName,
+    Result,
+    AccessPackageDisplayName,
+    AccessPackageId,
+    CatalogDisplayName,
+    TargetUserUPN,
+    TargetUserDisplayName,
+    RequestInitiator,
+    ErrorReason,
+    FailureSeverity,
+    CorrelationId,
+    // Additional context fields
+    ActivityDisplayName,
+    Category
+| order by TimeGenerated desc
