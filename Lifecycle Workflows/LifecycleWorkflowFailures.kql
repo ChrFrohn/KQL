@@ -1,0 +1,22 @@
+// Lifecycle Workflows Failure Alert Query
+// Triggers one alert for each Lifecycle Workflow or task failure
+
+AuditLogs
+| where TimeGenerated >= ago(5m)  // Look back 5 minutes for alerts
+| where Category in ("WorkflowManagement", "LifecycleWorkflows", "TaskManagement")
+| where Result == "failure"  // Only failed operations
+| extend 
+    WorkflowName = coalesce(tostring(TargetResources[0].displayName), "Unknown Workflow"),
+    TargetUser = coalesce(tostring(TargetResources[0].userPrincipalName), "System"),
+    ErrorMessage = coalesce(tostring(ResultReason), "No error details"),
+    Initiator = coalesce(tostring(InitiatedBy.user.userPrincipalName), tostring(InitiatedBy.app.displayName), "System")
+| project 
+    TimeGenerated,
+    Category,
+    OperationName,
+    WorkflowName,
+    TargetUser,
+    ErrorMessage,
+    Initiator,
+    Result,
+    CorrelationId
