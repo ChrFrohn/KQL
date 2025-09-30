@@ -1,0 +1,12 @@
+// License Assignment Failure Alert Query
+// Purpose: Monitors for license assignment failures 
+// Frequency: Every 5 minutes for near real-time monitoring
+// Alert Threshold: > 0 (any failure triggers alert)
+
+AuditLogs
+| where TimeGenerated > ago(5m)  // 5-minute window for real-time alerting
+| where Result == "failure"
+| where ActivityDisplayName contains "license"
+| extend UserAffected = tostring(TargetResources[0].userPrincipalName)
+| project TimeGenerated, ActivityDisplayName, UserAffected, ResultReason
+| order by TimeGenerated desc
