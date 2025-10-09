@@ -6,7 +6,6 @@
 AADProvisioningLogs
 | where TimeGenerated >= ago(7d)
 | where Action in ("Create", "Update", "Delete")
-| where ResultType == "Success"
 | extend 
     TargetSystemParsed = parse_json(TargetSystem),
     SourceIdentityParsed = parse_json(SourceIdentity),
@@ -22,7 +21,6 @@ AADProvisioningLogs
     OldValue = tostring(ModifiedProperty.oldValue),
     NewValue = tostring(ModifiedProperty.newValue)
 | where AttributeName != "accountDisabled"  // Exclude routine account enabling
-//| where UserIdentifier contains "EMP"
 | extend 
     // Map attributes to business-friendly names
     AttributeDisplayName = case(
