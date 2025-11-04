@@ -1,0 +1,46 @@
+// Group Membership Changes - Entra ID Only - Last 24 Hours
+AuditLogs
+| where TimeGenerated > ago(24h)
+| where OperationName in ("Add member to group", "Remove member from group")
+| extend Actor = tostring(parse_json(tostring(InitiatedBy.user)).userPrincipalName)
+| extend Target = tostring(TargetResources[0].userPrincipalName)
+| extend ModifiedProps = parse_json(tostring(TargetResources[0].modifiedProperties))
+| extend GroupName = case(
+    OperationName == "Add member to group", tostring(parse_json(tostring(ModifiedProps[1].newValue))),
+    OperationName == "Remove member from group", tostring(parse_json(tostring(ModifiedProps[1].oldValue))),
+    ""
+)
+| extend GroupID = case(
+    OperationName == "Add member to group", tostring(parse_json(tostring(ModifiedProps[0].newValue))),
+    OperationName == "Remove member from group", tostring(parse_json(tostring(ModifiedProps[0].oldValue))),
+    ""
+)
+| extend Action = case(
+    OperationName == "Add member to group", "Add",
+    OperationName == "Remove member from group", "Remove",
+    "Unknown"
+)
+| where isnotempty(Actor) and isnotempty(Target)
+| extend 
+    TimeWindow = case(
+        TimeGenerated > ago(1h), "🔴 Last Hour",
+        TimeGenerated > ago(6h), "🟡 Last 6 Hours", 
+        "🟠 Last 24 Hours"
+    ),
+    ActionDisplay = case(
+        Action == "Add", "➕ Add",
+        Action == "Remove", "➖ Remove",
+        "❓ Unknown"
+    ),
+    DateFormatted = format_datetime(TimeGenerated, "yyyy-MM-dd HH:mm:ss")
+| project 
+    DateFormatted,
+    TimeWindow,
+    ActionDisplay,
+    Actor,
+    Target,
+    GroupName,
+    GroupID,
+    TimeGenerated
+| order by TimeGenerated desc
+| project-away TimeGenerated
